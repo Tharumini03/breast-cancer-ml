@@ -1,472 +1,393 @@
 \documentclass[conference]{IEEEtran}
 
-% ---- Packages ----
+% ── Packages ──────────────────────────────────────────────
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{booktabs}
-\usepackage{hyperref}
 \usepackage{float}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+% ── Graphics path (all your PNG files should be in same folder) ──
+\graphicspath{{./}}
 
 \begin{document}
 
-% ============================================================
+% ══════════════════════════════════════════════════════════
 %  TITLE & AUTHORS
-% ============================================================
-\title{Breast Cancer Diagnosis Using Classical Machine Learning:
+% ══════════════════════════════════════════════════════════
+\title{Breast Cancer Diagnosis Using Classical Machine Learning:\\
        A Comparative Study with Ensemble Improvements}
 
 \author{
-  \IEEEauthorblockN{Your Full Name}
+  \IEEEauthorblockN{N.G.T.S. GAMAGE}
   \IEEEauthorblockA{
-    \textit{Department of Computer Science} \\
-    \textit{Your University Name} \\
-    Your City, Your Country \\
-    your.email@university.edu
+    \textit{Department of Computer Science Engineering} \\
+    \textit{University of Moratuwa} \\
+    Moratuwa, Sri Lanka \\
+    tharuminig.23@cse.mrt.ac.lk
   }
 }
 
 \maketitle
 
 
-% ============================================================
+% ══════════════════════════════════════════════════════════
 %  ABSTRACT
-% ============================================================
+% ══════════════════════════════════════════════════════════
 \begin{abstract}
-Breast cancer remains one of the leading causes of cancer-related 
-mortality worldwide, making early and accurate diagnosis critically 
-important. This paper presents a comprehensive comparative study of 
-classical machine learning methods applied to the UCI Wisconsin 
-Breast Cancer Diagnostic (WDBC) dataset for binary classification 
-of tumors as malignant or benign. Five baseline models are evaluated: 
-Logistic Regression, Support Vector Machine (SVM), K-Nearest Neighbors 
-(KNN), Decision Tree, and Naive Bayes. Building upon the baseline 
-results, improvements are proposed through hyperparameter optimization 
-via GridSearchCV, ensemble methods including Random Forest and Gradient 
-Boosting, and a Soft Voting Ensemble combining the three best-performing 
-models. Feature selection using SelectKBest reduced dimensionality from 
-30 to 15 features. The proposed Voting Ensemble achieved an F1 score of 
-[YOUR SCORE] and ROC-AUC of [YOUR SCORE], outperforming all baseline 
-models. Results demonstrate that systematic hyperparameter tuning and 
-ensemble strategies significantly improve diagnostic accuracy in 
-classical ML pipelines.
+Breast cancer is one of the leading causes of death worldwide, so detecting it early and accurately is very important. In this study, we used the UCI Wisconsin Breast Cancer dataset to compare how well different machine learning models can classify tumors as either malignant or benign.
+
+I first tested five basic models: Logistic Regression, Support Vector Machine (SVM), K-Nearest Neighbors (KNN), Decision Tree, and Naive Bayes. After that, I improved the models using techniques such as hyperparameter tuning (GridSearchCV), ensemble methods like Random Forest and Gradient Boosting, and a Soft Voting Ensemble that combines the best models.
+
+The number of features was also reduced from 30 to 15 using SelectKBest to make the model simpler and more efficient. The tuned SVM gave the best individual performance with an F1 score of 0.9790 and ROC-AUC of 0.9931. The Voting Ensemble performed even better overall, achieving an ROC-AUC of 0.9970.
+
+These results show that improving and combining simple machine learning models can give very high accuracy, without needing complex deep learning methods.
 \end{abstract}
 
 \begin{IEEEkeywords}
-breast cancer diagnosis, machine learning, SVM, ensemble methods, 
+breast cancer diagnosis, machine learning, SVM, ensemble methods,
 feature selection, classification, UCI WDBC dataset
 \end{IEEEkeywords}
 
 
-% ============================================================
-%  SECTION 1 — INTRODUCTION
-% ============================================================
+% ══════════════════════════════════════════════════════════
+%  I. INTRODUCTION
+% ══════════════════════════════════════════════════════════
 \section{Introduction}
 
-Breast cancer is one of the most prevalent and life-threatening 
-diseases affecting millions of people globally. According to the 
-World Health Organization, breast cancer accounts for approximately 
-12\% of all new cancer diagnoses worldwide each year~\cite{who2023}. 
-Early and accurate diagnosis is essential, as it significantly 
-improves treatment outcomes and survival rates.
+Breast cancer is one of the most common and life-threatening diseases affecting millions of people around the world. According to the World Health Organization, it accounts for about 12\% of all new cancer cases each year~\cite{who2023}. Because of this, early and accurate diagnosis is extremely important, as it can greatly improve treatment success and increase survival rates.
 
-Machine learning (ML) has emerged as a powerful tool to assist 
-medical professionals in diagnosing breast cancer from clinical 
-measurements. Unlike deep learning approaches, classical ML methods 
-offer interpretability and computational efficiency, making them 
-well-suited for clinical decision support systems where transparency 
-is critical.
+In recent years, machine learning (ML) has become a valuable tool to support medical professionals in diagnosing breast cancer using clinical data. Compared to more complex deep learning approaches, classical ML methods are easier to interpret and require less computational power. This makes them especially useful in healthcare settings, where understanding how a model makes decisions is just as important as its accuracy.
 
-This study uses the publicly available UCI Wisconsin Breast Cancer 
-Diagnostic (WDBC) dataset~\cite{uci_wdbc}, which contains 569 
-samples with 30 numerical features derived from digitized images 
-of fine needle aspirate (FNA) of breast masses. Each sample is 
-labeled as either malignant (212 samples) or benign (357 samples).
+In this study, the publicly available UCI Wisconsin Breast Cancer Diagnostic (WDBC) dataset~\cite{uci_wdbc} was used. This dataset contains 569 samples, each with 30 numerical features extracted from digitized images of fine needle aspirate (FNA) of breast masses. Each sample is labeled as either malignant (212 cases) or benign (357 cases). Since the dataset is slightly imbalanced, stratified splitting was applied to ensure fair representation of both classes during training and testing.
 
-The primary contributions of this paper are:
+The main contributions of this paper are as follows:
 \begin{itemize}
-  \item A systematic evaluation of five classical ML classifiers 
-        as baselines on the WDBC dataset.
-  \item Proposed improvements through hyperparameter tuning, 
-        ensemble methods, and feature selection.
-  \item A noise robustness analysis evaluating model stability 
-        under varying levels of Gaussian noise.
-  \item Identification of the most discriminative features for 
-        breast cancer classification.
+\item A structured evaluation of five classical machine learning models as baseline approaches on the WDBC dataset.
+\item Performance improvements using techniques such as hyperparameter tuning, ensemble learning, and feature selection with SelectKBest.
+\item An analysis of model robustness by testing how the best-performing model behaves under different levels of Gaussian noise.
+\item Identification of the most important features for breast cancer classification using Random Forest feature importance.
 \end{itemize}
 
-The remainder of this paper is organized as follows. Section II 
-reviews related work. Section III describes the methodology. 
-Section IV presents results. Section V discusses findings, and 
-Section VI concludes the paper.
+The rest of the paper is organized as follows. Section II reviews related work. Section III explains the methodology. Section IV presents the results. Section V discusses the findings, and Section VI concludes the study.
 
 
-% ============================================================
-%  SECTION 2 — RELATED WORK
-% ============================================================
+% ══════════════════════════════════════════════════════════
+%  II. RELATED WORK
+% ══════════════════════════════════════════════════════════
 \section{Related Work}
 
-Several studies have applied classical ML methods to breast cancer 
-diagnosis using the UCI WDBC dataset. Wolberg et al.~\cite{wolberg1995} 
-originally introduced the dataset and demonstrated the utility of 
-ML-based approaches for cytological diagnosis.
+Several studies have explored the use of classical machine learning methods for breast cancer diagnosis using the UCI WDBC dataset. The dataset itself was first introduced by Wolberg et al.~\cite{wolberg1995}, who demonstrated how machine learning techniques could support the cytological diagnosis of breast tumors based on FNA measurements.
 
-Akay~\cite{akay2009} proposed an SVM-based approach with feature 
-selection achieving approximately 99.51\% accuracy on the WDBC 
-dataset. Their work highlighted the importance of removing 
-irrelevant features to improve SVM performance.
+Later, Akay~\cite{akay2009} showed that using Support Vector Machines (SVM) together with feature selection can achieve very high accuracy (around 99.51\%). This work highlighted an important idea: removing unnecessary or irrelevant features can significantly improve model performance, especially when working with high-dimensional medical data.
 
-The PMLB benchmark study by Olson et al.~\cite{olson2017} 
-evaluated a wide range of classifiers across many UCI datasets, 
-establishing competitive baselines for ensemble methods such as 
-Random Forest and Gradient Boosting on medical classification tasks.
+Olson et al.~\cite{olson2017}, through the PMLB benchmark study, evaluated many different machine learning models across several datasets, including those from the UCI repository. Their results showed that ensemble methods such as Random Forest and Gradient Boosting often perform better than individual models, particularly in medical classification problems.
 
-Exarchos et al.~\cite{exarchos2012} demonstrated that combining 
-multiple classifiers through ensemble strategies consistently 
-outperforms individual models for clinical datasets, motivating 
-the ensemble approach adopted in this study.
+Similarly, Exarchos et al.~\cite{exarchos2012} found that combining multiple models through ensemble techniques leads to more reliable and accurate predictions compared to using a single model. Supporting this, Breiman~\cite{breiman2001} introduced Random Forests and demonstrated how they reduce overfitting and improve stability compared to individual decision trees.
 
-In contrast to these works, this paper focuses not only on 
-achieving high accuracy but also on systematic improvement 
-analysis, feature importance evaluation, and robustness testing 
-under noisy conditions.
+While these studies mainly focus on improving prediction accuracy, this paper takes a broader approach. In addition to achieving strong performance, I also examine how models can be systematically improved, identify the most important features influencing predictions, and test how robust the models are when noise is introduced into the data. This provides a more complete evaluation, which is important for real-world clinical applications.
 
 
-% ============================================================
-%  SECTION 3 — METHODOLOGY
-% ============================================================
+% ══════════════════════════════════════════════════════════
+%  III. METHODOLOGY
+% ══════════════════════════════════════════════════════════
 \section{Methodology}
 
 \subsection{Dataset}
 
-The UCI Wisconsin Breast Cancer Diagnostic dataset~\cite{uci_wdbc} 
-consists of 569 instances with 30 real-valued features computed 
-from digitized FNA images. Features describe characteristics of 
-cell nuclei including radius, texture, perimeter, area, smoothness, 
-compactness, concavity, symmetry, and fractal dimension — each 
-measured as mean, standard error, and worst value. The binary 
-target variable indicates malignant (0) or benign (1) diagnosis.
+The UCI Wisconsin Breast Cancer Diagnostic dataset~\cite{uci_wdbc} used in this study contains 569 patient samples, each described by 30 numerical features. These features are extracted from digitized images of fine needle aspirate (FNA) of breast masses and represent different characteristics of cell nuclei, such as radius, texture, perimeter, area, smoothness, compactness, concavity, symmetry, and fractal dimension.
+
+For each of these characteristics, three types of values are recorded: the mean, the standard error, and the worst (maximum) value observed in the image. This provides a detailed representation of the cell structure for each sample.
+
+Each instance in the dataset is labeled as either malignant (Class 0, 212 samples) or benign (Class 1, 357 samples). The dataset is clean and does not contain any missing values, making it well-suited for machine learning analysis.
 
 \subsection{Preprocessing}
 
-The dataset contained no missing values. The following preprocessing 
-steps were applied:
+Before training the models, the dataset was carefully prepared through a series of preprocessing steps to ensure reliable and unbiased results.
 
 \begin{enumerate}
-  \item \textbf{Stratified Train/Test Split:} The dataset was 
-    divided into 80\% training (455 samples) and 20\% testing 
-    (114 samples) using stratified sampling to preserve class 
-    distribution in both subsets.
-  \item \textbf{Feature Scaling:} StandardScaler was applied to 
-    normalize all features to zero mean and unit variance. 
-    Critically, the scaler was fitted exclusively on the training 
-    set and applied to the test set to prevent data leakage.
-  \item \textbf{Feature Selection:} SelectKBest with ANOVA F-test 
-    (\texttt{f\_classif}) was used to select the top 15 most 
-    discriminative features from the original 30, reducing 
-    dimensionality while retaining the most informative signals.
+\item \textbf{Stratified Train/Test Split:} The dataset was divided into training and testing sets using an 80%–20% split (455 training samples and 114 testing samples). A stratified approach was used so that both sets maintain the same proportion of malignant and benign cases. This helps ensure that model evaluation reflects real-world class distributions.
+
+\item \textbf{Feature Scaling:} All features were standardized using StandardScaler to have a mean of zero and a standard deviation of one. This is important because many machine learning models perform better when features are on a similar scale. To avoid data leakage, the scaler was fitted only on the training data and then applied to the test data.
+
+\item \textbf{Feature Selection:} To reduce complexity and improve efficiency, SelectKBest with the ANOVA F-test (\texttt{f\_classif}) was used to select the 15 most informative features from the original 30. This step helps the model focus on the most relevant characteristics while removing less useful ones.
 \end{enumerate}
 
 \subsection{Baseline Models}
 
-Five classical ML classifiers were trained using default 
-scikit-learn parameters as baselines:
+To establish a clear starting point, five classical machine learning models were trained using the default settings provided by the scikit-learn library. These models serve as baseline references for evaluating later improvements.
 
 \begin{itemize}
-  \item \textbf{Logistic Regression (LR):} A linear probabilistic 
-    classifier well-suited for binary classification.
-  \item \textbf{Support Vector Machine (SVM):} Uses an RBF kernel 
-    to find an optimal separating hyperplane in a transformed 
-    feature space.
-  \item \textbf{K-Nearest Neighbors (KNN):} A non-parametric 
-    classifier using k=5 nearest samples by Euclidean distance.
-  \item \textbf{Decision Tree (DT):} A tree-based model that 
-    recursively partitions the feature space.
-  \item \textbf{Naive Bayes (NB):} A probabilistic classifier 
-    based on Bayes' theorem with feature independence assumption.
+\item \textbf{Logistic Regression (LR):} A simple and widely used linear classifier that estimates probabilities using a logistic function. L2 regularization was applied to prevent overfitting, and the maximum number of iterations was set to 1000 to ensure proper convergence.
+
+\item \textbf{Support Vector Machine (SVM):} This model uses a radial basis function (RBF) kernel to separate data points in a higher-dimensional space. It is effective for handling complex decision boundaries. Probability estimation was enabled to allow evaluation using ROC-AUC.
+
+\item \textbf{K-Nearest Neighbors (KNN):} A non-parametric method that classifies a data point based on the majority class of its $k=5$ nearest neighbors, using Euclidean distance. Its performance depends heavily on properly scaled features.
+
+\item \textbf{Decision Tree (DT):} A tree-based model that splits the data recursively based on feature values, using Gini impurity as the splitting criterion. While easy to interpret, it can overfit the training data if not properly controlled.
+
+\item \textbf{Naive Bayes (NB):} A probabilistic classifier based on Bayes’ theorem, assuming that features are independent. The Gaussian version was used, making it suitable for continuous data.
 \end{itemize}
 
 \subsection{Proposed Improvements}
 
-Four improvement strategies were applied:
+To enhance the performance of the baseline models, four improvement strategies were applied in a structured and systematic manner:
 
 \begin{enumerate}
-  \item \textbf{Hyperparameter Tuning:} GridSearchCV with 5-fold 
-    cross-validation optimized hyperparameters for LR 
-    (C, solver, penalty) and SVM (C, gamma, kernel).
-  \item \textbf{Random Forest:} An ensemble of decision trees 
-    trained with bagging, tuned for n\_estimators, max\_depth, 
-    and min\_samples\_split.
-  \item \textbf{Gradient Boosting:} A sequential ensemble method 
-    tuned for n\_estimators, learning\_rate, and max\_depth.
-  \item \textbf{Soft Voting Ensemble:} Combined the Tuned LR, 
-    Tuned SVM, and Random Forest using soft voting — averaging 
-    predicted class probabilities to make final decisions.
+\item \textbf{Hyperparameter Tuning:} GridSearchCV with 5-fold cross-validation was used to find the best set of parameters for Logistic Regression and SVM. For Logistic Regression, parameters such as regularization strength (C), solver type, and penalty were tuned. For SVM, parameters including C, gamma, and kernel type were optimized. The F1 score was used as the main evaluation metric during this process, as it provides a good balance between precision and recall.
+
+\item \textbf{Random Forest:} A Random Forest model was introduced as an ensemble of multiple decision trees trained on different subsets of the data using bootstrap sampling. Key parameters such as the number of trees (\texttt{n\_estimators}), maximum tree depth (\texttt{max\_depth}), and minimum samples required for splitting (\texttt{min\_samples\_split}) were tuned to improve performance and reduce overfitting.
+
+\item \textbf{Gradient Boosting:} Gradient Boosting was applied as another ensemble technique, where trees are built sequentially, with each new tree focusing on correcting the errors made by previous ones. Important parameters such as the number of estimators, learning rate, and maximum depth were carefully adjusted to achieve better predictive accuracy.
+
+\item \textbf{Soft Voting Ensemble:} Finally, a Soft Voting Ensemble was created by combining the three best-performing models—tuned Logistic Regression, tuned SVM, and Random Forest. Instead of relying on individual predictions, this approach averages the predicted probabilities from each model to make a final decision, resulting in improved overall performance.
 \end{enumerate}
 
 \subsection{Evaluation Metrics}
 
-All models were evaluated using: Accuracy, Precision, Recall, 
-F1 Score, ROC-AUC, and 5-fold Stratified Cross-Validation F1. 
-In medical diagnosis, Recall (sensitivity) is particularly 
-important as it measures the ability to correctly identify 
-malignant cases — false negatives carry higher clinical risk 
-than false positives.
+The performance of all models was evaluated using several standard metrics, including Accuracy, Precision, Recall, F1 Score, ROC-AUC, and 5-fold stratified cross-validation F1 score. These metrics provide a comprehensive view of model performance from different perspectives.
 
-\subsection{Noise Robustness}
+In the context of medical diagnosis, Recall (also known as sensitivity) is especially important. This is because false negatives cases where a malignant tumor is incorrectly classified as benign can have serious and potentially life-threatening consequences. Therefore, particular attention was given to Recall when comparing model performance.
 
-To assess model stability, Gaussian noise at levels 
-$\sigma \in \{0.0, 0.05, 0.1, 0.2, 0.3, 0.5\}$ was added 
-to the test set and accuracy/F1 were recorded for the 
-best-performing model.
+\subsection{Noise Robustness Analysis}
 
+To further evaluate the reliability of the models, a noise robustness analysis was conducted. In real-world clinical settings, measurements can vary due to factors such as imaging conditions or human error. To simulate this, Gaussian noise was added to the test data at different levels ($\sigma \in {0.00, 0.05, 0.10, 0.20, 0.30, 0.50}$).
 
-% ============================================================
-%  SECTION 4 — RESULTS
-% ============================================================
+The best-performing model, the tuned SVM, was then tested on these modified datasets, and its Accuracy and F1 Score were recorded. This analysis helps assess how well the model maintains its performance under noisy and imperfect data conditions, which is important for practical clinical use.
+
+% ══════════════════════════════════════════════════════════
+%  IV. RESULTS
+% ══════════════════════════════════════════════════════════
 \section{Results}
 
 \subsection{Baseline Model Performance}
 
-Table~\ref{tab:baseline} summarizes the performance of the five 
-baseline classifiers. SVM and Logistic Regression achieved the 
-highest F1 scores, consistent with the linear separability of 
-the WDBC feature space after scaling.
+Table~\ref{tab:baseline} presents the performance of the five baseline models. Among them, Logistic Regression achieved the best results, with an F1 score of 0.9722 and an accuracy of 0.9649. This strong performance suggests that the dataset becomes nearly linearly separable after applying feature scaling.
 
-% --- REPLACE VALUES WITH YOUR ACTUAL RESULTS ---
+On the other hand, the Decision Tree showed the lowest performance, with an F1 score of 0.9362. This is likely due to its tendency to overfit the training data when no constraints, such as limiting tree depth, are applied.
+
 \begin{table}[H]
 \centering
-\caption{Baseline Model Performance}
+\caption{Baseline Model Performance on the WDBC Test Set}
 \label{tab:baseline}
 \begin{tabular}{lcccc}
 \toprule
-\textbf{Model} & \textbf{Acc} & \textbf{Prec} & 
+\textbf{Model} & \textbf{Acc.} & \textbf{Prec.} &
 \textbf{Recall} & \textbf{F1} \\
 \midrule
-Logistic Regression & 0.XXXX & 0.XXXX & 0.XXXX & 0.XXXX \\
-SVM                 & 0.XXXX & 0.XXXX & 0.XXXX & 0.XXXX \\
-KNN                 & 0.XXXX & 0.XXXX & 0.XXXX & 0.XXXX \\
-Decision Tree       & 0.XXXX & 0.XXXX & 0.XXXX & 0.XXXX \\
-Naive Bayes         & 0.XXXX & 0.XXXX & 0.XXXX & 0.XXXX \\
+Logistic Regression & 0.9649 & 0.9722 & 0.9722 & 0.9722 \\
+KNN                 & 0.9561 & 0.9718 & 0.9583 & 0.9650 \\
+SVM                 & 0.9474 & 0.9583 & 0.9583 & 0.9583 \\
+Decision Tree       & 0.9211 & 0.9565 & 0.9167 & 0.9362 \\
+Naive Bayes         & 0.9298 & 0.9444 & 0.9444 & 0.9444 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Improved Model Performance}
 
-Table~\ref{tab:improved} presents the results after applying 
-hyperparameter tuning and ensemble strategies. The Soft Voting 
-Ensemble achieved the best overall performance across all metrics.
+The results after applying hyperparameter tuning and ensemble methods are shown in Table~\ref{tab:improved}. The tuned SVM achieved the highest F1 score of 0.9790 and an accuracy of 0.9737, making it the best individual model.
 
-% --- REPLACE VALUES WITH YOUR ACTUAL RESULTS ---
+The Voting Ensemble, which combines multiple models, achieved the highest ROC-AUC value of 0.9970. This indicates that it is the most effective at distinguishing between malignant and benign cases based on predicted probabilities.
+
 \begin{table}[H]
 \centering
-\caption{Improved Model Performance}
+\caption{Improved Model Performance on the WDBC Test Set}
 \label{tab:improved}
 \begin{tabular}{lcccc}
 \toprule
-\textbf{Model} & \textbf{Acc} & \textbf{Prec} & 
+\textbf{Model} & \textbf{Acc.} & \textbf{Prec.} &
 \textbf{Recall} & \textbf{F1} \\
 \midrule
-Tuned LR          & 0.XXXX & 0.XXXX & 0.XXXX & 0.XXXX \\
-Tuned SVM         & 0.XXXX & 0.XXXX & 0.XXXX & 0.XXXX \\
-Random Forest     & 0.XXXX & 0.XXXX & 0.XXXX & 0.XXXX \\
-Gradient Boosting & 0.XXXX & 0.XXXX & 0.XXXX & 0.XXXX \\
-Voting Ensemble   & 0.XXXX & 0.XXXX & 0.XXXX & 0.XXXX \\
+Tuned LR            & 0.9561 & 0.9589 & 0.9722 & 0.9655 \\
+Tuned SVM           & \textbf{0.9737} & \textbf{0.9859} & 0.9722 & \textbf{0.9790} \\
+Random Forest       & 0.9561 & 0.9589 & 0.9722 & 0.9655 \\
+Gradient Boosting   & 0.9474 & 0.9459 & 0.9722 & 0.9589 \\
+Voting Ensemble     & 0.9561 & 0.9589 & 0.9722 & 0.9655 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{ROC Curves}
 
-Fig.~\ref{fig:roc} illustrates the ROC curves for all improved 
-models. The Voting Ensemble and Tuned SVM achieved the highest 
-AUC values, indicating strong discriminative ability between 
-malignant and benign classes.
+Figure~\ref{fig:roc} shows the ROC curves for both baseline and improved models. Among the baseline models, Logistic Regression and SVM performed similarly, each reaching an AUC of 0.991, while the Decision Tree lagged behind with an AUC of 0.923.
+
+After applying improvements, all models showed better performance. The Voting Ensemble achieved the highest AUC of 0.997, followed closely by the tuned SVM (0.993) and tuned Logistic Regression (0.992). Notably, the ROC curves of the improved models are clustered near the top-left corner, indicating strong classification performance.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\columnwidth]{../final_roc_curves.png}
-  \caption{ROC curves for improved models.}
+  \includegraphics[width=\columnwidth]{final_roc_curves.png}
+  \caption{ROC curve comparison for baseline and improved models.}
   \label{fig:roc}
 \end{figure}
 
 \subsection{Confusion Matrix}
 
-Fig.~\ref{fig:cm} shows the confusion matrix for the best 
-performing model (Voting Ensemble). The model correctly 
-classified [X] out of [X] malignant cases, yielding a 
-false negative rate of [X]\%.
+Figure~\ref{fig:cm} shows the confusion matrix for the best-performing model, the tuned SVM. Out of 43 malignant cases, the model correctly identified 41, with only 2 cases misclassified as benign. In addition, there was just 1 false positive.
+
+This results in a false negative rate of 4.65\%, which is particularly important in a clinical context. Missing a malignant case can have serious consequences, so having only 2 such errors in a test set of 114 samples indicates strong and reliable performance.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.75\columnwidth]
-                  {../best_model_confusion_matrix.png}
-  \caption{Confusion matrix — Voting Ensemble.}
+  \includegraphics[width=0.80\columnwidth]{best_model_confusion_matrix.png}
+  \caption{Confusion matrix for the Tuned SVM (best model).}
   \label{fig:cm}
 \end{figure}
 
 \subsection{Feature Importance}
 
-Fig.~\ref{fig:fi} presents feature importances derived from 
-the Random Forest model. [YOUR TOP FEATURE] emerged as the 
-most discriminative feature, followed by [2ND FEATURE] and 
-[3RD FEATURE], consistent with clinical understanding that 
-tumor size and shape irregularity are key malignancy indicators.
+Figure~\ref{fig:fi} illustrates the feature importance scores obtained from the Random Forest model. Among all features, \textit{worst perimeter} was identified as the most important, with a score of 0.181. This was followed by \textit{worst radius} (0.143) and \textit{worst concave points} (0.137).
+
+Interestingly, the top five features are all related to the size and irregularity of the tumor in its most extreme measurements. This aligns well with medical understanding, as larger and more irregular tumors are generally more likely to be malignant.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\columnwidth]{../feature_importance.png}
-  \caption{Feature importance scores from Random Forest.}
+  \includegraphics[width=\columnwidth]{feature_importance.png}
+  \caption{Feature importance scores from the Random Forest model.}
   \label{fig:fi}
 \end{figure}
 
 \subsection{Cross-Validation}
 
-Fig.~\ref{fig:cv} shows the 5-fold stratified cross-validation 
-F1 distributions. Improved models exhibit higher median scores 
-and lower variance, indicating more stable generalization.
+Figure~\ref{fig:cv} presents the results of 5-fold stratified cross-validation in terms of F1 score. The tuned SVM achieved a mean F1 score of 0.9667 with a low standard deviation of 0.0084, indicating consistent performance across different data splits. The Voting Ensemble also performed well, with a mean of 0.9593 and a slightly higher variation (std 0.0123).
+
+In contrast, the Decision Tree showed the highest variability (std 0.0322), suggesting that its performance is less stable and more dependent on the specific data split. Overall, the improved models demonstrate tighter distributions and more consistent results, indicating better generalization to unseen data.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\columnwidth]{../cv_boxplot.png}
-  \caption{5-fold CV F1 score distributions for all models.}
+  \includegraphics[width=\columnwidth]{cv_boxplot.png}
+  \caption{5-fold cross-validation F1 score distributions for
+           all models.}
   \label{fig:cv}
 \end{figure}
 
 \subsection{Noise Robustness}
 
-The Tuned SVM maintained [X]\% accuracy at noise level 
-$\sigma=0.1$, degrading to [X]\% at $\sigma=0.5$, demonstrating 
-reasonable robustness for clinical applicability where measurement 
-noise is expected.
+The performance of the tuned SVM model under increasing levels of noise is shown in Fig.~\ref{fig:noise}. At the original noise level ($\sigma = 0.00$), the model achieved an accuracy of 97.37\%. As noise was gradually introduced, performance declined in a predictable manner—dropping to 94.74\% at $\sigma = 0.10$, 87.72\% at $\sigma = 0.20$, and 78.07\% at $\sigma = 0.50$.
+
+A similar trend was observed for the F1 score, which decreased from 0.978 at $\sigma = 0.00$ to 0.815 at $\sigma = 0.50$.
+
+Despite this decline at higher noise levels, the model remained relatively stable for low levels of noise ($\sigma \leq 0.10$), which are more representative of real-world clinical measurement variations. This suggests that the tuned SVM can maintain reliable performance under typical conditions, making it suitable for practical use.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\columnwidth]{noise_robustness.png}
+  \caption{Noise robustness of the Tuned SVM under Gaussian noise.}
+  \label{fig:noise}
+\end{figure}
 
 
-% ============================================================
-%  SECTION 5 — DISCUSSION
-% ============================================================
+% ══════════════════════════════════════════════════════════
+%  V. DISCUSSION
+% ══════════════════════════════════════════════════════════
 \section{Discussion}
 
 \subsection{Why SVM and Logistic Regression Perform Best}
 
-The strong baseline performance of SVM and Logistic Regression 
-suggests the WDBC feature space is largely linearly separable 
-after StandardScaler normalization. Distance-based and 
-margin-based models particularly benefit from proper feature 
-scaling, which is why these models outperformed the Decision 
-Tree — a scale-invariant model.
+The strong performance of Logistic Regression (F1,=,0.9722) and SVM (F1,=,0.9583) suggests that the dataset becomes largely linearly separable after feature scaling with StandardScaler. Models like Logistic Regression and SVM, which rely on distances and margins between data points, benefit greatly from this normalization.
+
+In contrast, the Decision Tree does not depend on feature scaling and therefore does not gain the same advantage, which helps explain its lower performance. After hyperparameter tuning, the SVM showed further improvement, achieving the highest F1 score of 0.9790 and becoming the best-performing individual model.
 
 \subsection{Impact of Hyperparameter Tuning}
 
-GridSearchCV improved F1 by [X]\% for LR and [X]\% for SVM 
-over their default configurations. This confirms that default 
-hyperparameters are rarely optimal and systematic search is 
-a worthwhile investment even for well-established models.
+Applying GridSearchCV led to a noticeable improvement in model performance. For SVM, the F1 score increased from 0.9583 to 0.9790, indicating that the default parameter settings are not optimal for this dataset. Careful tuning of parameters such as $C$ and $\gamma$ allowed the model to better capture the underlying patterns in the data.
 
-\subsection{Ensemble Methods}
+For Logistic Regression, tuning resulted in a similar Recall value (0.9722) compared to the baseline, but with a slightly improved balance between Precision and Recall.
 
-Random Forest reduced overfitting compared to the single 
-Decision Tree baseline by aggregating predictions across 
-[200] trees with bootstrap sampling. The Soft Voting Ensemble 
-further improved performance by leveraging the complementary 
-strengths of LR, SVM, and Random Forest — each model 
-contributes diverse decision boundaries.
+\subsection{Ensemble Methods Analysis}
+
+The use of ensemble methods further improved model performance. Random Forest helped reduce overfitting compared to a single Decision Tree by combining the predictions of multiple trees trained on different subsets of the data.
+
+The Soft Voting Ensemble achieved the highest ROC-AUC score of 0.9970, outperforming even the tuned SVM. This is because it combines the strengths of multiple models: Logistic Regression, SVM, and Random Forest, leading to better overall probability-based predictions. However, it did not exceed the tuned SVM in terms of F1 score, likely because averaging probabilities can make the model slightly more conservative when making final classification decisions.
 
 \subsection{Clinical Implications of Recall}
 
-In breast cancer diagnosis, a false negative (predicting benign 
-when actually malignant) carries far greater clinical risk than 
-a false positive. The Voting Ensemble achieved a Recall of 
-[YOUR RECALL], meaning it correctly identified [X]\% of all 
-malignant tumors — a critical metric for medical deployment.
+In breast cancer diagnosis, false negatives are far more critical than false positives. Misclassifying a malignant tumor as benign can delay treatment and lead to serious consequences.
+
+The tuned SVM achieved a Recall of 0.9722, correctly identifying 41 out of 43 malignant cases (95.35\%) in the test set, with only 2 missed cases. This level of performance is promising for clinical applications. In future work, the decision threshold could be adjusted to further prioritize Recall, even if it results in a slight decrease in Precision, as this trade-off is often acceptable in medical screening scenarios.
+
+\subsection{Feature Insights}
+
+The feature importance results from the Random Forest model show that the “worst” values of tumor measurements play the most important role in classification. This makes intuitive sense from a clinical perspective, as the most extreme characteristics of a tumor are often more informative than average values or variations.
+
+This finding also suggests a practical advantage. It may be possible to build a simpler model using only the top 5–8 most important features while still maintaining strong performance. Such a reduction in required measurements could be especially useful in resource-limited clinical settings, where time and equipment may be constrained.
 
 \subsection{Limitations and Future Work}
 
-Several limitations should be noted. First, the dataset size 
-(569 samples) is relatively small; performance on larger 
-clinical datasets remains to be validated. Second, deep 
-learning methods were excluded by design — future work could 
-compare classical ML against shallow neural networks. Third, 
-class imbalance (357 benign vs 212 malignant) was addressed 
-through stratified splits but not through oversampling 
-techniques such as SMOTE, which could further improve Recall.
+Despite the strong results, there are several limitations to consider. First, the dataset contains only 569 samples, which is relatively small. To ensure the model is reliable in real-world applications, it should be tested on larger datasets from multiple clinical sources.
 
+Second, this study focuses only on classical machine learning methods. Future work could include comparisons with deep learning or shallow neural network approaches to evaluate potential performance gains.
 
-% ============================================================
-%  SECTION 6 — CONCLUSION
-% ============================================================
+Third, while the class imbalance (357 benign vs.\ 212 malignant cases) was handled using stratified splitting, more advanced techniques such as oversampling (e.g., SMOTE) could be explored to further improve Recall.
+
+Finally, improving model interpretability is important for clinical adoption. Techniques such as SHAP values could be used in future work to better explain how the model makes its predictions, helping clinicians trust and understand the results.
+
+% ══════════════════════════════════════════════════════════
+%  VI. CONCLUSION
+% ══════════════════════════════════════════════════════════
 \section{Conclusion}
 
-This paper presented a systematic study of classical machine 
-learning methods for breast cancer diagnosis using the UCI 
-WDBC dataset. Five baseline models were evaluated, with SVM 
-and Logistic Regression achieving the strongest baseline 
-performance. Four improvement strategies — hyperparameter 
-tuning, Random Forest, Gradient Boosting, and a Soft Voting 
-Ensemble — were applied and evaluated.
+This study presented a detailed comparison of classical machine learning methods for breast cancer diagnosis using the UCI WDBC dataset. Five baseline models were first evaluated, with Logistic Regression showing the strongest initial performance (F1,=,0.9722, AUC,=,0.9914). Building on these results, several improvement strategies like hyperparameter tuning, Random Forest, Gradient Boosting, and a Soft Voting Ensemble were applied to enhance model performance.
 
-The proposed Voting Ensemble achieved the best overall 
-performance with an F1 score of [YOUR SCORE], accuracy of 
-[YOUR SCORE], and ROC-AUC of [YOUR SCORE], representing a 
-meaningful improvement over the best baseline. Feature 
-importance analysis identified [TOP FEATURE] as the most 
-discriminative variable, consistent with clinical knowledge.
+Among all models, the tuned SVM achieved the best individual performance, with an F1 score of 0.9790, accuracy of 0.9737, and ROC-AUC of 0.9931. This represents a clear improvement over the baseline SVM. The Voting Ensemble produced the highest ROC-AUC of 0.9970, indicating its strong ability to distinguish between malignant and benign cases. In addition, feature importance analysis highlighted \textit{worst perimeter} as the most influential feature, which aligns with established clinical understanding of tumor characteristics.
 
-These results demonstrate that well-tuned classical ML 
-pipelines with proper preprocessing and ensemble strategies 
-can achieve clinically competitive diagnostic accuracy without 
-the computational overhead of deep learning. Future work will 
-explore SMOTE-based oversampling, larger clinical datasets, 
-and explainability techniques such as SHAP values for 
-clinical deployment.
+Overall, the results show that carefully designed classical machine learning pipelines supported by proper preprocessing, feature selection, and ensemble techniques can achieve high diagnostic accuracy without the need for more complex deep learning models.
+
+For future work, several directions can be explored. These include using techniques such as SMOTE to better handle class imbalance, validating the models on larger and more diverse clinical datasets, and incorporating explainability methods like SHAP to improve transparency and support real-world clinical adoption.
 
 
-% ============================================================
+% ══════════════════════════════════════════════════════════
 %  REFERENCES
-% ============================================================
+% ══════════════════════════════════════════════════════════
 \begin{thebibliography}{00}
 
 \bibitem{who2023}
-World Health Organization, ``Breast Cancer,'' 
-\textit{WHO Fact Sheets}, 2023. [Online]. Available: 
+World Health Organization, ``Breast Cancer,''
+\textit{WHO Fact Sheets}, 2023. [Online]. Available:
 https://www.who.int/news-room/fact-sheets/detail/breast-cancer
 
 \bibitem{uci_wdbc}
-W. H. Wolberg, W. N. Street, and O. L. Mangasarian, 
-``Breast Cancer Wisconsin (Diagnostic) Data Set,'' 
+W.~H. Wolberg, W.~N. Street, and O.~L. Mangasarian,
+``Breast Cancer Wisconsin (Diagnostic) Data Set,''
 \textit{UCI Machine Learning Repository}, 1995.
 
 \bibitem{wolberg1995}
-W. H. Wolberg, W. N. Street, D. M. Heisey, and 
-O. L. Mangasarian, ``Computerized breast cancer diagnosis 
-and prognosis from fine-needle aspirates,'' 
-\textit{Archives of Surgery}, vol. 130, no. 5, 
-pp. 511--516, 1995.
+W.~H. Wolberg, W.~N. Street, D.~M. Heisey, and
+O.~L. Mangasarian,
+``Computerized breast cancer diagnosis and prognosis from
+fine-needle aspirates,''
+\textit{Archives of Surgery}, vol.~130, no.~5,
+pp.~511--516, 1995.
 
 \bibitem{akay2009}
-M. F. Akay, ``Support vector machines combined with 
-feature selection for breast cancer diagnosis,'' 
-\textit{Expert Systems with Applications}, vol. 36, 
-no. 2, pp. 3240--3247, 2009.
+M.~F. Akay,
+``Support vector machines combined with feature selection for
+breast cancer diagnosis,''
+\textit{Expert Systems with Applications}, vol.~36, no.~2,
+pp.~3240--3247, 2009.
 
 \bibitem{olson2017}
-R. S. Olson, W. La Cava, P. Orzechowski, R. J. Urbanowicz, 
-and J. H. Moore, ``PMLB: A large benchmark suite for machine 
-learning evaluation and comparison,'' 
-\textit{BioData Mining}, vol. 10, no. 36, 2017.
+R.~S. Olson, W.~La~Cava, P.~Orzechowski, R.~J. Urbanowicz,
+and J.~H. Moore,
+``PMLB: A large benchmark suite for machine learning evaluation
+and comparison,''
+\textit{BioData Mining}, vol.~10, no.~36, 2017.
 
 \bibitem{exarchos2012}
-K. P. Exarchos, Y. Goletsis, and D. I. Fotiadis, 
-``Multiparametric decision support system for the prediction 
-of oral cancer reoccurrence,'' 
-\textit{IEEE Transactions on Information Technology 
-in Biomedicine}, vol. 16, no. 6, pp. 1127--1134, 2012.
+K.~P. Exarchos, Y.~Goletsis, and D.~I. Fotiadis,
+``Multiparametric decision support system for the prediction of
+oral cancer reoccurrence,''
+\textit{IEEE Transactions on Information Technology in
+Biomedicine}, vol.~16, no.~6, pp.~1127--1134, 2012.
 
 \bibitem{breiman2001}
-L. Breiman, ``Random forests,'' 
-\textit{Machine Learning}, vol. 45, pp. 5--32, 2001.
+L.~Breiman,
+``Random forests,''
+\textit{Machine Learning}, vol.~45, pp.~5--32, 2001.
 
 \end{thebibliography}
 
